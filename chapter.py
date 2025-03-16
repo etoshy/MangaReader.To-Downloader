@@ -3,8 +3,8 @@ import json
 import requests
 from bs4 import BeautifulSoup
 
-def baixar_imagem(img_url, img_path):
-    for attempt in range(3):  # Tentar baixar a imagem até 3 vezes
+def download_image(img_url, img_path):
+    for attempt in range(3):  # Try downloading the image up to 3 times
         try:
             response = requests.get(img_url, stream=True, timeout=10)
             if response.status_code == 200:
@@ -13,30 +13,30 @@ def baixar_imagem(img_url, img_path):
                         img_file.write(chunk)
                 return
         except requests.exceptions.RequestException as e:
-            print(f"Erro ao baixar {img_url} (tentativa {attempt+1}): {e}")
-    print(f"Falha ao baixar {img_url} após 3 tentativas.")
+            print(f"Error downloading {img_url} (attempt {attempt+1}): {e}")
+    print(f"Failed to download {img_url} after 3 attempts.")
 
-def baixar_dados_manga(url):
+def download_manga_data(url):
     response = requests.get(url)
     if response.status_code != 200:
-        print("Erro ao acessar a página")
+        print("Error accessing the page")
         return
     
     soup = BeautifulSoup(response.text, 'html.parser')
     
-    # Pegando os dados do wrapper
+    # Getting data from the wrapper
     wrapper = soup.find("div", id="wrapper")
     manga_id = wrapper["data-manga-id"]
     reading_id = wrapper["data-reading-id"]
     language = wrapper["data-lang-code"]
-    reading_by = wrapper["data-reading-by"]  # Identifica se é capítulo ou volume
+    reading_by = wrapper["data-reading-by"]  # Identifies whether it's a chapter or volume
     
-    # Pegando o nome e link do mangá
+    # Getting manga name and link
     manga_link_tag = soup.find("a", class_="hr-manga")
     manga_name = manga_link_tag.find("h2", class_="manga-name").text.strip()
     manga_link = "https://mangareader.to" + manga_link_tag["href"]
     
-    # Pegando o número do capítulo ou volume pelo título da página
+    # Getting the chapter or volume number from the page title
     title = soup.find("title").text
     
     if reading_by == "chap":
@@ -48,15 +48,15 @@ def baixar_dados_manga(url):
         folder_name = f"Volume {number}"
         image_api_url = f"https://mangareader.to/ajax/image/list/vol/{reading_id}?mode=vertical&quality=high&hozPageSize=1"
     else:
-        print("Formato desconhecido")
+        print("Unknown format")
         return
     
-    # Criando a estrutura de diretórios
+    # Creating directory structure
     base_path = os.path.join("mangas", manga_name, folder_name)
     os.makedirs(base_path, exist_ok=True)
     
-    # Criando e salvando o JSON antes de baixar as imagens
-    dados = {
+    # Creating and saving JSON before downloading images
+    data = {
         "manga_name": manga_name,
         "manga_id": manga_id,
         "manga_link": manga_link,
@@ -70,11 +70,11 @@ def baixar_dados_manga(url):
     
     json_path = os.path.join(base_path, "info.json")
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(dados, f, indent=4, ensure_ascii=False)
+        json.dump(data, f, indent=4, ensure_ascii=False)
     
-    print(f"Dados salvos em {json_path}")
+    print(f"Data saved in {json_path}")
     
-    # Baixando links das imagens
+    # Downloading image links
     image_response = requests.get(image_api_url)
     
     if image_response.status_code == 200:
@@ -83,21 +83,21 @@ def baixar_dados_manga(url):
         
         for idx, img_tag in enumerate(image_tags, start=1):
             img_url = img_tag["data-url"]
-            dados["image_links"].append({f"imagem {idx}": img_url})
+            data["image_links"].append({f"image {idx}": img_url})
             
-            # Baixando e salvando a imagem
+            # Downloading and saving the image
             img_path = os.path.join(base_path, f"{idx}.jpg")
-            baixar_imagem(img_url, img_path)
+            download_image(img_url, img_path)
     
-    # Atualizando o JSON com os links de imagens
+    # Updating JSON with image links
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(dados, f, indent=4, ensure_ascii=False)
+        json.dump(data, f, indent=4, ensure_ascii=False)
     
-    print(f"Download concluído para {manga_name} {folder_name}")
+    print(f"Download completed for {manga_name} {folder_name}")
 
-# Pedindo os links ao usuário
-urls = input("Digite os links dos capítulos ou volumes separados por vírgula: ").split(",")
+# Asking the user for links
+urls = input("Enter the chapter or volume links separated by commas: ").split(",")
 urls = [url.strip() for url in urls]
 
 for url in urls:
-    baixar_dados_manga(url)
+    download_manga_data(url)
