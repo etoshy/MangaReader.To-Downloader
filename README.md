@@ -1,4 +1,4 @@
-# MangaReader.to Downloader
+# MangaReader.to Downloader ![Views Counter](https://views-counter.vercel.app/badge?pageId=https%3A%2F%2Fgithub%2Ecom%2Fetoshy%2Fmangareader%2Eto-downloader&leftColor=ffffff&rightColor=000000&type=total&label=Viewers&style=none)
 
 This is a Python script to download manga images from the site [MangaReader.to](https://mangareader.to). The script extracts manga information such as name, ID, reading type (chapter or volume), language, and downloads the chapter/volume images, saving everything in an organized directory structure.
 
